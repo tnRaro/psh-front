@@ -11,7 +11,7 @@ interface IProp {
     register: any;
 }
 
-const AgreementCheckbox = (props: IProp) => {
+const TermsCheckbox = (props: IProp) => {
     const id = props.id,
         url = props.url,
         message = props.message,
@@ -20,7 +20,6 @@ const AgreementCheckbox = (props: IProp) => {
         onChange = props.onChange,
         register = props.register;
     return <Checkbox
-            value={id}
             name={id}
             isChecked={isChecked}
             onChange={onChange}
@@ -34,4 +33,4 @@ const AgreementCheckbox = (props: IProp) => {
     </Checkbox>
 }
 
-export default AgreementCheckbox;
+export default TermsCheckbox;

@@ -11,9 +11,11 @@ import {
     Checkbox,
     Divider
 } from "@chakra-ui/core";
-import AgreementCheckbox from "./AgreementCheckbox";
+import TermsCheckbox from "./TermsCheckbox";
+import req from "@/api/users/new";
+import router from "next/router";
 
-type AgreementItems = {
+type TermsItems = {
     id: string;
     url?: string;
     message: string;
@@ -24,37 +26,37 @@ type AgreementItems = {
 const Form = () => {
     const { handleSubmit, errors, register, formState, watch } = useForm();
 
-    const [agreementItems, setAgreementItems] = useState<AgreementItems[]>([
+    const [termsItems, setTermsItems] = useState<TermsItems[]>([
         {
-            id: "agreement-0",
+            id: "agelimit",
             message: "만 14세 이상입니다.",
             isRequired: true,
             isChecked: false,
         },
         {
-            id: "agreement-1",
+            id: "usepolicy",
             url: "/usepolicy",
             message: "이용약관",
             isRequired: true,
             isChecked: false,
         },
         {
-            id: "agreement-2",
+            id: "privacy",
             url: "/privacy",
             message: "개인정보처리방침",
             isRequired: true,
             isChecked: false,
         },
         {
-            id: "agreement-3",
+            id: "promotion",
             message: "이벤트, 프로모션 알림 메일 및 뿌테 초대 수신",
             isRequired: false,
             isChecked: false,
         }
     ]);
 
-    const onChangeAgreementItem = (e: ChangeEvent<HTMLInputElement>) => {
-        setAgreementItems(agreementItems.map(item => {
+    const onChangeTermsItem = (e: ChangeEvent<HTMLInputElement>) => {
+        setTermsItems(termsItems.map(item => {
             if (item.id === e.target.name) {
                 return {
                     ...item,
@@ -65,8 +67,8 @@ const Form = () => {
         }));
     }
 
-    const onChangeAllAgreementItemsChecked = (e: ChangeEvent<HTMLInputElement>) => {
-        setAgreementItems(agreementItems.map(item => {
+    const onChangeAllTermsItemsChecked = (e: ChangeEvent<HTMLInputElement>) => {
+        setTermsItems(termsItems.map(item => {
             return {
                 ...item,
                 isChecked: e.target.checked
@@ -74,7 +76,7 @@ const Form = () => {
         }));
     }
 
-    const allAgreementItemsChecked = agreementItems.every(item => item.isChecked);
+    const allTermsItemsChecked = termsItems.every(item => item.isChecked);
 
     const password = useRef({});
     password.current = watch("password", "");
@@ -83,9 +85,37 @@ const Form = () => {
         return value === password.current || "비밀번호가 일치하지 않습니다.";
     }
 
-    const onSubmit = (values: any) => {
-        // TODO
+    interface IFormValues {
+        email: string;
+        username: string;
+        password: string;
+        agelimit: boolean;
+        usepolicy: boolean;
+        privacy: boolean;
+        promotion: boolean;
+    }
+
+    const onSubmit = async (values: IFormValues) => {
         console.log(values);
+        try {
+            const data = await req({
+                email: values.email,
+                username: values.username,
+                password: values.password,
+                terms: {
+                    agelimit: values.agelimit,
+                    usepolicy: values.usepolicy,
+                    privacy: values.privacy,
+                    promotion: values.promotion,
+                }
+            });
+        
+            console.log(data.newUser);
+    
+            router.replace("/");
+        } catch (e) {
+            console.error(e.message);
+        }
     }
 
     return <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -153,10 +183,10 @@ const Form = () => {
                 {errors.password2 && errors.password2.message}
             </FormErrorMessage>
         </FormControl>
-        <FormControl mt="1em" isInvalid={errors.nickname} isRequired>
-            <FormLabel htmlFor="nickname">별명</FormLabel>
+        <FormControl mt="1em" isInvalid={errors.username} isRequired>
+            <FormLabel htmlFor="username">이름</FormLabel>
             <Input
-                name="nickname"
+                name="username"
                 ref={register({
                     required: {
                         value: true,
@@ -164,36 +194,37 @@ const Form = () => {
                     },
                     minLength: {
                         value: 2,
-                        message: "별명은 2자 이싱으로 설정해주세요."
+                        message: "이름은 2자 이싱으로 설정해주세요."
                     },
                     maxLength: {
                         value: 53,
-                        message: "별명은 53자 이하로 설정해주세요."
+                        message: "이름은 53자 이하로 설정해주세요."
                     }
                 })}
-                placeholder="별명 (2-53자)"/>
+                placeholder="이름 (2-53자)"/>
                 <FormErrorMessage>
-                    {errors.nickname && errors.nickname.message}
+                    {errors.username && errors.username.message}
                 </FormErrorMessage>
         </FormControl>
-        <FormControl isInvalid={agreementItems.some(item => item.isRequired && !item.isChecked)} isRequired>
-            <FormLabel htmlFor="agreement">약관 동의</FormLabel>
+        <FormControl isInvalid={termsItems.some(item => item.isRequired && !item.isChecked)} isRequired>
             <Stack border="1px" borderRadius="md" borderColor="gray.200" p="1em" mt="1em">
+                <FormLabel htmlFor="tos">약관 동의</FormLabel>
                 <Checkbox
-                    isChecked={allAgreementItemsChecked}
-                    onChange={onChangeAllAgreementItemsChecked}>
+                    name="tos"
+                    isChecked={allTermsItemsChecked}
+                    onChange={onChangeAllTermsItemsChecked}>
                     전체동의
                 </Checkbox>
                 <Divider />
-                {agreementItems.map(item => {
-                    return <AgreementCheckbox
+                {termsItems.map(item => {
+                    return <TermsCheckbox
                         key={item.id}
                         id={item.id}
                         url={item.url}
                         message={item.message}
                         isRequired={item.isRequired}
                         isChecked={item.isChecked}
-                        onChange={onChangeAgreementItem}
+                        onChange={onChangeTermsItem}
                         register={register}
                     />;
                 })}
